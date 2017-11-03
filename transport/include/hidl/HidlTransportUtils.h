@@ -23,15 +23,22 @@ namespace android {
 namespace hardware {
 namespace details {
 
+using ::android::hidl::base::V1_0::IBase;
+
 /*
  * Verifies the interface chain of 'interface' contains 'castTo'
  * @param emitError if emitError is false, return Return<bool>{false} on error; if emitError
  * is true, the Return<bool> object contains the actual error.
  */
-inline Return<bool> canCastInterface(::android::hidl::base::V1_0::IBase* interface,
-        const char* castTo, bool emitError = false) {
+inline Return<bool> canCastInterface(IBase* interface, const char* castTo, bool emitError = false) {
     if (interface == nullptr) {
         return false;
+    }
+
+    // b/68217907
+    // Every HIDL interface is a base interface.
+    if (std::string(IBase::descriptor) == castTo) {
+        return true;
     }
 
     bool canCast = false;
@@ -54,7 +61,7 @@ inline Return<bool> canCastInterface(::android::hidl::base::V1_0::IBase* interfa
     return canCast;
 }
 
-inline std::string getDescriptor(::android::hidl::base::V1_0::IBase* interface) {
+inline std::string getDescriptor(IBase* interface) {
     std::string myDescriptor{};
     auto ret = interface->interfaceDescriptor([&](const hidl_string &types) {
         myDescriptor = types.c_str();
